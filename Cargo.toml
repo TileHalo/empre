@@ -6,6 +6,8 @@ authors = ["Leo Lahti leo.lahti1@gmail.com"]
 license = "Apache-2.0"
 keywords = ["electromagnetism", "field", "maxwell", "greens function"]
 categories = ["mathematics", "science"]
+rust-version = "1.75"
+description = "Antenna and microwave engineering focused elecromagnetic prelude"
 
 [dependencies]
 alga = "0.9.3"

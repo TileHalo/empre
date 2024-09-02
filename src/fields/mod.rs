@@ -5,7 +5,6 @@ use crate::prelude::base::{AlgebraField, FiniteVectorSpace};
 
 pub mod scalar;
 
-
 /// The base field, all scalar/vector/tensor etc. fields should implement this.
 pub trait ElementField<T: AlgebraField, const N: usize> {
     /// The coordinates for which Input values correspond to.

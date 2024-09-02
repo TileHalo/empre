@@ -27,7 +27,7 @@ pub trait Division<Rhs = Self>: Sized + Div<Rhs, Output = Self> + DivAssign<Rhs>
 
 #[cfg(feature = "dumdiv")]
 /// [Alias] Trait alias of Division
-pub trait Division<Rhs = Self>: Sized + DumDiv<Rhs>{}
+pub trait Division<Rhs = Self>: Sized + DumDiv<Rhs> {}
 
 /// [Alias] The Base field type
 pub trait AlgebraField: Addition + Subtraction + Multiplication + Division {}
@@ -42,11 +42,11 @@ pub trait FiniteVectorSpace:
     type Field: AlgebraField;
 }
 
-impl<T: Add<Self, Output=Self> + AddAssign<Self>> Addition for T {}
-impl<T: Sub<Self, Output=Self> + SubAssign<Self>> Subtraction for T {}
-impl<T: Mul<Self, Output=Self> + MulAssign<Self>> Multiplication for T {}
+impl<T: Add<Self, Output = Self> + AddAssign<Self>> Addition for T {}
+impl<T: Sub<Self, Output = Self> + SubAssign<Self>> Subtraction for T {}
+impl<T: Mul<Self, Output = Self> + MulAssign<Self>> Multiplication for T {}
 #[cfg(not(feature = "dumdiv"))]
-impl<T: Div<Self, Output=Self> + DivAssign<Self>> Division for T {}
+impl<T: Div<Self, Output = Self> + DivAssign<Self>> Division for T {}
 #[cfg(feature = "dumdiv")]
 impl<T: DumDiv> Division for T {}
 
