@@ -1,29 +1,183 @@
 //! Base vector field module. Contains an implementation for discrete vector field.
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::{
+    marker::PhantomData,
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
+};
 
 use alga::{general::Field, linear::VectorSpace};
 use ndarray::{Array, Dim, Ix};
 
 use crate::prelude::{
     base::{AlgebraField, DumDiv, Zero},
+    coordinate::CoordinateSystem,
     FiniteVectorSpace,
 };
 
 use super::{scalar::ZeroScalarField, ElementField, ScalarField, VectorField};
 
-/// Base N-dimensional vector field
-#[derive(Clone)]
-/// Coordinates of the vector field
-pub struct DiscreteVectorField<T: Field, V: VectorSpace, const N: usize> {
-    pub coords: Array<[T; N], Dim<[Ix; N]>>,
-    /// Values of the scalar field
-    pub data: Array<V, Dim<[Ix; N]>>,
-}
+/// Modifier for for whether curl is zero or not
+pub trait CurlModifier: Copy + Clone {}
+/// Modifier for for whether div is zero or not
+pub trait DivModifier: Copy + Clone {}
+
+/// Marker for field type
+pub trait FieldType: Copy + Clone {}
+
+/// Marker for conservative (i.e. curl free) vector field
+#[derive(Copy, Clone)]
+pub struct ConservativeField;
+
+/// Marker for divergence free vector field.
+#[derive(Copy, Clone)]
+pub struct DivFreeField;
+
+/// Marker for a field where no information on curl or divergence exists.
+#[derive(Copy, Clone)]
+pub struct AnyField;
 
 /// A Zero vector field, i.e. everything is zero everywhere
 #[derive(Clone, Copy)]
 pub struct ZeroVectorField;
 
+/// Base N-dimensional vector field
+#[derive(Clone)]
+pub struct DiscreteVectorField<
+    T: Field + Default,
+    V: VectorSpace + Default,
+    const N: usize,
+    A: CurlModifier + DivModifier,
+    C: CoordinateSystem,
+    F: FieldType,
+> {
+    /// The coordinate data
+    pub coords: Vec<[T; N]>,
+    /// Values of the scalar field
+    pub data: Vec<V>,
+    /// Shape of the vector field
+    pub shape: [usize; N],
+    _a: PhantomData<A>,
+    _c: PhantomData<C>,
+    _f: PhantomData<F>,
+}
+
+impl CurlModifier for ConservativeField {}
+impl CurlModifier for DivFreeField {}
+impl CurlModifier for AnyField {}
+
+impl DivModifier for ConservativeField {}
+impl DivModifier for DivFreeField {}
+impl DivModifier for AnyField {}
+
+impl FieldType for AnyField {}
+
+impl<T: Field + Default, const N: usize, V: VectorSpace + Default, C: CoordinateSystem>
+    DiscreteVectorField<T, V, N, AnyField, C, AnyField>
+{
+    /// Create a new empty vector field
+    pub fn new() -> Self {
+        DiscreteVectorField {
+            coords: Vec::new(),
+            data: Vec::new(),
+            shape: [0; N],
+            _a: PhantomData,
+            _c: PhantomData,
+            _f: PhantomData,
+        }
+    }
+}
+
+impl<
+        T: Field + Default,
+        V: VectorSpace + Default,
+        const N: usize,
+        A: CurlModifier + DivModifier,
+        C: CoordinateSystem,
+        F: FieldType,
+    > Add for DiscreteVectorField<T, V, N, A, C, F>
+{
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        DiscreteVectorField {
+            coords: self.coords.iter().zip(rhs.coords.iter()).map(|(a, _)| a.clone()).collect(),
+            data: self.data.iter().zip(rhs.data.into_iter()).map(|(a, b)| a.clone() + b).collect(),
+            shape: self.shape,
+            _a: self._a,
+            _c: self._c,
+            _f: self._f,
+        }
+    }
+}
+impl<
+        T: Field + Default,
+        V: VectorSpace + Default,
+        const N: usize,
+        A: CurlModifier + DivModifier,
+        C: CoordinateSystem,
+        F: FieldType,
+    > Sub for DiscreteVectorField<T, V, N, A, C, F>
+{
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        DiscreteVectorField {
+            coords: self.coords.iter().zip(rhs.coords.iter()).map(|(a, _)| a.clone()).collect(),
+            data: self.data.iter().zip(rhs.data.into_iter()).map(|(a, b)| a.clone() - b).collect(),
+            shape: self.shape,
+            _a: self._a,
+            _c: self._c,
+            _f: self._f,
+        }
+    }
+}
+impl<
+        T: Field + Default,
+        V: VectorSpace + Default,
+        const N: usize,
+        A: CurlModifier + DivModifier,
+        C: CoordinateSystem,
+        F: FieldType,
+    > Mul<V::Field> for DiscreteVectorField<T, V, N, A, C, F>
+{
+    type Output = Self;
+
+    fn mul(self, rhs: V::Field) -> Self {
+        DiscreteVectorField {
+            coords: self.coords,
+            data: self.data.iter().map(|a| a.clone() * rhs.clone()).collect(),
+            shape: self.shape,
+            _a: self._a,
+            _c: self._c,
+            _f: self._f,
+        }
+    }
+}
+
+#[cfg(not(feature = "dumdiv"))]
+impl<
+        T: Field + Default,
+        V: VectorSpace + Default,
+        const N: usize,
+        A: CurlModifier + DivModifier,
+        C: CoordinateSystem,
+        F: FieldType,
+    > Div<V::Field> for DiscreteVectorField<T, V, N, A, C, F>
+{
+    type Output = Self;
+
+    fn div(self, rhs: V::Field) -> Self {
+        DiscreteVectorField {
+            coords: self.coords,
+            data: self.data.iter().map(|a| a.clone() / rhs.clone()).collect(),
+            shape: self.shape,
+            _a: self._a,
+            _c: self._c,
+            _f: self._f,
+        }
+    }
+}
+
+// Below this are ZeroVectorField impls, these are mostly boilerplate
 impl<T: AlgebraField> FiniteVectorSpace<T> for ZeroVectorField {}
 
 impl<T: AlgebraField, V: FiniteVectorSpace<T>, const N: usize> ElementField<T, V, N>
