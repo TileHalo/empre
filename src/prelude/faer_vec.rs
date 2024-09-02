@@ -2,7 +2,7 @@
 
 use faer::{ComplexField, Entity, Row, Scale};
 
-use super::base::{AlgebraField, DumDiv, FiniteVectorSpace};
+use super::base::{AlgebraField, DumDiv, FiniteVectorSpace, Zero};
 
 impl<E: ComplexField> DumDiv<Scale<E>> for E {
     type Output = Self;
@@ -13,6 +13,12 @@ impl<E: ComplexField> DumDiv<Scale<E>> for E {
 
     fn dum_div_assign(&mut self, rhs: Scale<E>) {
         *self *= rhs.0.faer_inv();
+    }
+}
+
+impl<E: ComplexField> Zero for Scale<E> {
+    fn zero() -> Self {
+        Scale(E::faer_zero())
     }
 }
 
@@ -27,7 +33,10 @@ impl<E: ComplexField> DumDiv<Scale<E>> for Scale<E> {
         *self = Scale(self.0 * rhs.0.faer_inv());
     }
 }
-
-impl<E: Entity + AlgebraField + ComplexField> FiniteVectorSpace for Row<E> {
-    type Field = Scale<E>;
+impl<E: Entity + AlgebraField + ComplexField> Zero for Row<E> {
+    fn zero() -> Self {
+        Row::zeros(1)
+    }
 }
+
+impl<E: Entity + AlgebraField + ComplexField> FiniteVectorSpace<Scale<E>> for Row<E> {}

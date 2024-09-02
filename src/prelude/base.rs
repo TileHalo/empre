@@ -1,4 +1,7 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
+
+#[cfg(not(feature = "dumdiv"))]
+use std::ops::{Div, DivAssign};
 
 use alga::general::{ClosedAdd, ClosedDiv, ClosedMul, ClosedSub};
 
@@ -29,17 +32,19 @@ pub trait Division<Rhs = Self>: Sized + Div<Rhs, Output = Self> + DivAssign<Rhs>
 /// [Alias] Trait alias of Division
 pub trait Division<Rhs = Self>: Sized + DumDiv<Rhs> {}
 
+pub trait Zero {
+    fn zero() -> Self;
+}
+
 /// [Alias] The Base field type
-pub trait AlgebraField: Addition + Subtraction + Multiplication + Division {}
+pub trait AlgebraField: Addition + Subtraction + Multiplication + Division + Zero {}
 /// [Alias] The Base field type
 pub trait AlgebraRing: Addition + Subtraction + Multiplication {}
 
 /// The basic vector space abstraction
-pub trait FiniteVectorSpace:
-    ClosedAdd<Self> + ClosedSub<Self> + ClosedMul<Self::Field> + ClosedDiv<Self::Field>
+pub trait FiniteVectorSpace<T: AlgebraField>:
+    ClosedAdd<Self> + ClosedSub<Self> + ClosedMul<T> + ClosedDiv<T> + Zero
 {
-    /// The base field of the vector space
-    type Field: AlgebraField;
 }
 
 impl<T: Add<Self, Output = Self> + AddAssign<Self>> Addition for T {}
@@ -50,5 +55,5 @@ impl<T: Div<Self, Output = Self> + DivAssign<Self>> Division for T {}
 #[cfg(feature = "dumdiv")]
 impl<T: DumDiv> Division for T {}
 
-impl<T: Addition + Subtraction + Multiplication + Division> AlgebraField for T {}
+impl<T: Addition + Subtraction + Multiplication + Division + Zero> AlgebraField for T {}
 impl<T: Addition + Subtraction + Multiplication> AlgebraRing for T {}
