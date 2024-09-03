@@ -4,11 +4,8 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
-use alga::{general::Field, linear::VectorSpace};
-use ndarray::{Array, Dim, Ix};
-
 use crate::prelude::{
-    base::{AlgebraField, DumDiv, Zero},
+    base::{AlgebraField, Zero},
     coordinate::CoordinateSystem,
     FiniteVectorSpace,
 };
@@ -42,8 +39,8 @@ pub struct ZeroVectorField;
 /// Base N-dimensional vector field
 #[derive(Clone)]
 pub struct DiscreteVectorField<
-    T: Field + Default,
-    V: VectorSpace + Default,
+    T: AlgebraField + Default,
+    V: FiniteVectorSpace<T> + Default,
     const N: usize,
     A: CurlModifier + DivModifier,
     C: CoordinateSystem,
@@ -70,7 +67,7 @@ impl DivModifier for AnyField {}
 
 impl FieldType for AnyField {}
 
-impl<T: Field + Default, const N: usize, V: VectorSpace + Default, C: CoordinateSystem>
+impl<T: AlgebraField + Default, const N: usize, V: FiniteVectorSpace<T> + Default, C: CoordinateSystem>
     DiscreteVectorField<T, V, N, AnyField, C, AnyField>
 {
     /// Create a new empty vector field
@@ -86,9 +83,9 @@ impl<T: Field + Default, const N: usize, V: VectorSpace + Default, C: Coordinate
     }
 }
 
-impl<
-        T: Field + Default,
-        V: VectorSpace + Default,
+impl<'a,
+        T: AlgebraField + Default,
+        V: FiniteVectorSpace<T> + Default,
         const N: usize,
         A: CurlModifier + DivModifier,
         C: CoordinateSystem,
@@ -99,8 +96,8 @@ impl<
 
     fn add(self, rhs: Self) -> Self {
         DiscreteVectorField {
-            coords: self.coords.iter().zip(rhs.coords.iter()).map(|(a, _)| a.clone()).collect(),
-            data: self.data.iter().zip(rhs.data.into_iter()).map(|(a, b)| a.clone() + b).collect(),
+            coords: self.coords.iter().zip(rhs.coords.iter()).map(|(a, _)| *a).collect(),
+            data: self.data.iter().zip(&rhs.data).map(|(a, b)| a.clone() + b.clone()).collect(),
             shape: self.shape,
             _a: self._a,
             _c: self._c,
@@ -109,8 +106,8 @@ impl<
     }
 }
 impl<
-        T: Field + Default,
-        V: VectorSpace + Default,
+        T: AlgebraField + Default,
+        V: FiniteVectorSpace<T> + Default,
         const N: usize,
         A: CurlModifier + DivModifier,
         C: CoordinateSystem,
@@ -121,8 +118,8 @@ impl<
 
     fn sub(self, rhs: Self) -> Self {
         DiscreteVectorField {
-            coords: self.coords.iter().zip(rhs.coords.iter()).map(|(a, _)| a.clone()).collect(),
-            data: self.data.iter().zip(rhs.data.into_iter()).map(|(a, b)| a.clone() - b).collect(),
+            coords: self.coords.iter().zip(rhs.coords).map(|(a, _)| *a).collect(),
+            data: self.data.iter().zip(rhs.data).map(|(a, b)| a.clone() - b).collect(),
             shape: self.shape,
             _a: self._a,
             _c: self._c,
@@ -131,20 +128,20 @@ impl<
     }
 }
 impl<
-        T: Field + Default,
-        V: VectorSpace + Default,
+        T: AlgebraField + Default,
+        V: FiniteVectorSpace<T> + Default,
         const N: usize,
         A: CurlModifier + DivModifier,
         C: CoordinateSystem,
         F: FieldType,
-    > Mul<V::Field> for DiscreteVectorField<T, V, N, A, C, F>
+    > Mul<T> for DiscreteVectorField<T, V, N, A, C, F>
 {
     type Output = Self;
 
-    fn mul(self, rhs: V::Field) -> Self {
+    fn mul(self, rhs: T) -> Self {
         DiscreteVectorField {
             coords: self.coords,
-            data: self.data.iter().map(|a| a.clone() * rhs.clone()).collect(),
+            data: self.data.iter().map(|a| a.clone() * rhs).collect(),
             shape: self.shape,
             _a: self._a,
             _c: self._c,
@@ -153,22 +150,21 @@ impl<
     }
 }
 
-#[cfg(not(feature = "dumdiv"))]
 impl<
-        T: Field + Default,
-        V: VectorSpace + Default,
+        T: AlgebraField + Default,
+        V: FiniteVectorSpace<T> + Default,
         const N: usize,
         A: CurlModifier + DivModifier,
         C: CoordinateSystem,
         F: FieldType,
-    > Div<V::Field> for DiscreteVectorField<T, V, N, A, C, F>
+    > Div<T> for DiscreteVectorField<T, V, N, A, C, F>
 {
     type Output = Self;
 
-    fn div(self, rhs: V::Field) -> Self {
+    fn div(self, rhs: T) -> Self {
         DiscreteVectorField {
             coords: self.coords,
-            data: self.data.iter().map(|a| a.clone() / rhs.clone()).collect(),
+            data: self.data.iter().map(|a| a.clone() / rhs).collect(),
             shape: self.shape,
             _a: self._a,
             _c: self._c,
@@ -285,15 +281,6 @@ impl<T> MulAssign<T> for ZeroVectorField {
 
 impl<T> DivAssign<T> for ZeroVectorField {
     fn div_assign(&mut self, _: T) {}
-}
-
-#[cfg(feature = "dumdiv")]
-impl<T> DumDiv<T> for ZeroVectorField {
-    type Output = ZeroVectorField;
-    fn dum_div(self, _: T) -> Self {
-        self
-    }
-    fn dum_div_assign(&mut self, _: T) {}
 }
 
 impl Zero for ZeroVectorField {
