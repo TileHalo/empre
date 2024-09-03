@@ -1,59 +1,57 @@
-use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
+//! Prelude base, contains various (abstract) algebra traits.
+use std::ops::{Div, DivAssign, Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
-#[cfg(not(feature = "dumdiv"))]
-use std::ops::{Div, DivAssign};
 
-use alga::general::{ClosedAdd, ClosedDiv, ClosedMul, ClosedSub};
+/// [\Alias] Trait alias of Addition
+pub trait Addition<'a, 'b, Rhs = Self>: Sized + Add<Rhs, Output = Self> + AddAssign<Rhs>
+where &'a Self: Add<&'b Rhs> + AddAssign<&'b Rhs>, Self: 'a, Rhs: 'b{}
+/// [\Alias] Trait alias of Subtraction
+pub trait Subtraction<'a, 'b, Rhs = Self>: Sized + Sub<Rhs, Output = Self> + SubAssign<Rhs>
+where &'a Self: Sub<&'b Rhs> + SubAssign<&'b Rhs>, Self: 'a, Rhs: 'b{}
+/// [\Alias] Trait alias of Multiplication
+pub trait Multiplication<'a, 'b, Rhs = Self>: Sized + Mul<Rhs, Output = Self> + MulAssign<Rhs>
+where &'a Self: Mul<&'b Rhs> + MulAssign<&'b Rhs>, Self: 'a, Rhs: 'b{}
 
-#[cfg(feature = "dumdiv")]
-/// A Dummy trait that implements Div and DivAssign for objects not implementing
-/// division (but might provide a way to do it).
-pub trait DumDiv<Rhs = Self> {
-    /// Output type
-    type Output;
-    /// The dummy division
-    fn dum_div(self, rhs: Rhs) -> Self::Output;
-    /// The dummy div assign
-    fn dum_div_assign(&mut self, rhs: Rhs);
-}
+/// [\Alias] Trait alias of Division
+pub trait Division<'a, 'b, Rhs = Self>: Sized + Div<Rhs, Output = Self> + DivAssign<Rhs>
+where &'a Self: Div<&'b Rhs> + DivAssign<&'b Rhs>, Self: 'a, Rhs: 'b{}
 
-/// [Alias] Trait alias of Addition
-pub trait Addition<Rhs = Self>: Sized + Add<Rhs, Output = Self> + AddAssign<Rhs> {}
-/// [Alias] Trait alias of Subtraction
-pub trait Subtraction<Rhs = Self>: Sub<Rhs, Output = Self> + SubAssign<Rhs> {}
-/// [Alias] Trait alias of Multiplication
-pub trait Multiplication<Rhs = Self>: Sized + Mul<Rhs, Output = Self> + MulAssign<Rhs> {}
-
-#[cfg(not(feature = "dumdiv"))]
-/// [Alias] Trait alias of Division
-pub trait Division<Rhs = Self>: Sized + Div<Rhs, Output = Self> + DivAssign<Rhs> {}
-
-#[cfg(feature = "dumdiv")]
-/// [Alias] Trait alias of Division
-pub trait Division<Rhs = Self>: Sized + DumDiv<Rhs> {}
-
+/// Trait that guarantees a zero element
 pub trait Zero {
+    /// Zero Value
     fn zero() -> Self;
 }
 
-/// [Alias] The Base field type
-pub trait AlgebraField: Addition + Subtraction + Multiplication + Division + Zero {}
-/// [Alias] The Base field type
-pub trait AlgebraRing: Addition + Subtraction + Multiplication {}
-
-/// The basic vector space abstraction
-pub trait FiniteVectorSpace<T: AlgebraField>:
-    ClosedAdd<Self> + ClosedSub<Self> + ClosedMul<T> + ClosedDiv<T> + Zero
-{
+/// Trait that guarantees an identity element
+pub trait One {
+    /// Identity Value
+    fn one() -> Self;
 }
 
-impl<T: Add<Self, Output = Self> + AddAssign<Self>> Addition for T {}
-impl<T: Sub<Self, Output = Self> + SubAssign<Self>> Subtraction for T {}
-impl<T: Mul<Self, Output = Self> + MulAssign<Self>> Multiplication for T {}
-#[cfg(not(feature = "dumdiv"))]
-impl<T: Div<Self, Output = Self> + DivAssign<Self>> Division for T {}
-#[cfg(feature = "dumdiv")]
-impl<T: DumDiv> Division for T {}
+/// [\Alias] The Base field type
+pub trait AlgebraField<'a>: Addition<'a, 'a> + Subtraction<'a, 'a> + Multiplication<'a, 'a> + Division<'a, 'a> + Zero + One + Clone + Copy
+where &'a Self: Add + AddAssign + Sub + SubAssign + Mul + MulAssign + Div + DivAssign, Self: 'a{}
 
-impl<T: Addition + Subtraction + Multiplication + Division + Zero> AlgebraField for T {}
-impl<T: Addition + Subtraction + Multiplication> AlgebraRing for T {}
+/// The basic vector space abstraction
+pub trait FiniteVectorSpace<'a, 'b, T: AlgebraField<'b>>:
+    Addition<'a, 'a, Self> + Subtraction<'a, 'a, Self> + Multiplication<'a, 'b,T> + Division<'a, 'b,T> + Zero
+where &'a Self: Add + AddAssign + Sub + SubAssign + Mul<&'b T> + MulAssign<&'b T> + Div<&'b T> + DivAssign<&'b T>,
+&'b T: Add + AddAssign + Sub + SubAssign + Mul + MulAssign + Div + DivAssign, Self: 'a, T: 'b{}
+
+impl <'a, 'b, T: Sized + Add<U, Output = T> + AddAssign<U>, U>  Addition<'a, 'b, U>
+    for T
+where &'a T: Add<&'b U> + AddAssign<&'b U>, T: 'a, U: 'b{}
+
+impl <'a, 'b, T: Sized + Sub<U, Output = T> + SubAssign<U>, U>  Subtraction<'a, 'b, U>
+    for T
+where &'a T: Sub<&'b U> + SubAssign<&'b U>, T: 'a, U: 'b{}
+impl <'a, 'b, T: Sized + Mul<U, Output = T> + MulAssign<U>, U>  Multiplication<'a, 'b, U>
+    for T
+where &'a T: Mul<&'b U> + MulAssign<&'b U>, T: 'a, U: 'b{}
+impl <'a, 'b, T: Sized + Div<U, Output = T> + DivAssign<U>, U>  Division<'a, 'b, U>
+    for T
+where &'a T: Div<&'b U> + DivAssign<&'b U>, T: 'a, U: 'b{}
+
+impl <'a, T:  Addition<'a, 'a> + Subtraction<'a, 'a> + Multiplication<'a, 'a> + Division<'a, 'a> + Zero + One + Clone + Copy>  AlgebraField<'a>
+    for T
+where &'a T: Add + AddAssign + Sub + SubAssign + Mul + MulAssign + Div + DivAssign, T: 'a{}

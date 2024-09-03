@@ -1,5 +1,4 @@
 //! Base scalar field module. Contains an implementation for discrete scalar field.
-use alga::general::Field;
 use ndarray::{Array, Dim, Ix};
 
 use crate::prelude::{base::AlgebraField, FiniteVectorSpace};
@@ -8,7 +7,7 @@ use super::{vector::ZeroVectorField, ElementField, ScalarField, VectorField};
 
 /// Base N-dimensional scalar field
 #[derive(Clone)]
-pub struct DiscreteScalarField<T: Field, V: Field, const N: usize> {
+pub struct DiscreteScalarField<T:AlgebraField, V:AlgebraField, const N: usize> {
     /// Coordinates of the scalar field
     pub coords: Array<[T; N], Dim<[Ix; N]>>,
     /// Values of the scalar field
