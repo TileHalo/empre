@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::prelude::{
-    base::{AlgebraField, Zero},
+   AlgebraField, Zero,
     coordinate::CoordinateSystem,
     FiniteVectorSpace,
 };

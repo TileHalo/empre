@@ -1,8 +1,8 @@
 //! This module implements traitsr from Alga to objects from faer.
 
-use faer::{ComplexField, Entity, Row, Scale};
+use faer::{ComplexField, Entity, Row, Col, Scale};
 
-use super::base::{AlgebraField, FiniteVectorSpace, Zero};
+use super::{AlgebraField, FiniteVectorSpace, Zero};
 
 
 impl<E: ComplexField> Zero for Scale<E> {
@@ -16,5 +16,11 @@ impl<E: Entity + ComplexField> Zero for Row<E> {
         Row::zeros(1)
     }
 }
+impl<E: Entity + ComplexField> Zero for Col<E> {
+    fn zero() -> Self {
+        Col::zeros(1)
+    }
+}
 
 impl<E: Entity + AlgebraField + ComplexField> FiniteVectorSpace<Scale<E>> for Row<E> {}
+impl<E: Entity + AlgebraField + ComplexField> FiniteVectorSpace<Scale<E>> for Col<E> {}

@@ -1,7 +1,8 @@
 //! This module contains both electromagnetic fields and various auxiliary fields (together with
 //! the definition of both vector and scalar fields).
 
-use crate::prelude::base::{AlgebraField, FiniteVectorSpace};
+use crate::prelude::{AlgebraField, FiniteVectorSpace};
+
 
 pub mod scalar;
 pub mod vector;

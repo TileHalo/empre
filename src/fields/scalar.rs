@@ -1,7 +1,7 @@
 //! Base scalar field module. Contains an implementation for discrete scalar field.
 use ndarray::{Array, Dim, Ix};
 
-use crate::prelude::{base::AlgebraField, FiniteVectorSpace};
+use crate::prelude::{AlgebraField, FiniteVectorSpace};
 
 use super::{vector::ZeroVectorField, ElementField, ScalarField, VectorField};
 
