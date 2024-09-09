@@ -1,18 +1,17 @@
 //! Base scalar field module. Contains an implementation for discrete scalar field.
-use ndarray::{Array, Dim, Ix};
 
 use crate::prelude::{AlgebraField, FiniteVectorSpace};
 
 use super::{vector::ZeroVectorField, ElementField, ScalarField, VectorField};
 
-/// Base N-dimensional scalar field
-#[derive(Clone)]
-pub struct DiscreteScalarField<T:AlgebraField, V:AlgebraField, const N: usize> {
-    /// Coordinates of the scalar field
-    pub coords: Array<[T; N], Dim<[Ix; N]>>,
-    /// Values of the scalar field
-    pub data: Array<V, Dim<[Ix; N]>>,
-}
+// /// Base N-dimensional scalar field
+// #[derive(Clone)]
+// pub struct DiscreteScalarField<T:AlgebraField, V:AlgebraField, const N: usize> {
+//     / Coordinates of the scalar field
+//     // pub coords: Array<[T; N], Dim<[Ix; N]>>,
+//     // /// Values of the scalar field
+//     // pub data: Array<V, Dim<[Ix; N]>>,
+// }
 
 /// A Zero scalar field, i.e. everything is zero everywhere
 

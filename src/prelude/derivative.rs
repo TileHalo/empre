@@ -14,12 +14,12 @@ pub trait Differentiable {
     /// The Singular coordinate type, ex. f64 where Space = (f64,f64)
     type Coordinate: Num + Copy;
     /// The resulting value (that is, Y in f: X -> Y).
-    type Value: Num + Div<Self::Coordinate, Output = Self::Value>;
+    type Output: Num + Div<Self::Coordinate, Output = Self::Output>;
 
     /// The coordinates at the input (i.e. coordinates of the Self::Space).
     fn coord(&self, inp: Self::Input) -> Self::Space;
     /// The value at point.
-    fn value(&self, inp: Self::Input) -> Self::Value;
+    fn value(&self, inp: Self::Input) -> Self::Output;
     /// The value at point.
     fn input_range(&self) -> (Self::Input, Self::Input);
 }
@@ -35,10 +35,10 @@ pub trait Derivation<I: Differentiable, const D: usize> {
 /// Discrete derivation that performs derivation on whole discrete space
 pub struct DiscreteDerivative;
 impl<
-        I: Differentiable<Input = usize, Space: Num + Copy, Value: Div<I::Space, Output = I::Value>>,
+        I: Differentiable<Input = usize, Space: Num + Copy, Output: Div<I::Space, Output = I::Output>>,
     > Derivation<I, 1> for DiscreteDerivative
 {
-    type Output = Option<I::Value>;
+    type Output = Option<I::Output>;
 
     fn derivate_at(&self, input: I, coord: I::Input, _: Option<usize>) -> Self::Output {
         let (min, max) = input.input_range();
@@ -67,7 +67,7 @@ macro_rules! n_dimensional_derivate {
     ($type:ty, ($($a:ty),*), $n:expr) => (
         impl <I: Differentiable<Input=($($a),*), Space: Index<usize, Output = I::Coordinate>>> Derivation<I, $n> for $type {
 
-            type Output = Option<I::Value>;
+            type Output = Option<I::Output>;
 
             fn derivate_at(&self, input: I, coord: I::Input, nth: Option<usize>) -> Self::Output {
                 match nth {

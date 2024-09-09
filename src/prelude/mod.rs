@@ -13,6 +13,9 @@ pub mod derivative;
 
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
+#[cfg(feature = "faer")]
+use faer::ComplexField;
+
 /// [Alias] Trait alias of Addition
 pub trait Addition<Rhs = Self>: Sized + Add<Rhs, Output = Self> + AddAssign<Rhs> {}
 /// [Alias] Trait alias of Subtraction
@@ -22,14 +25,20 @@ pub trait Multiplication<Rhs = Self>: Sized + Mul<Rhs, Output = Self> + MulAssig
 /// [Alias] Trait alias for Division
 pub trait Division<Rhs = Self>: Sized + Div<Rhs, Output = Self> + DivAssign<Rhs> {}
 
+pub trait Conjugate {
+
+    fn conj(self) -> Self;
+}
+
 
 /// Trait that provides zero element
 pub trait Zero {
+    /// Provides the zero
     fn zero() -> Self;
 }
 
 /// [Alias] The Base field type
-pub trait AlgebraField: Addition + Subtraction + Multiplication + Division + Zero + Clone + Copy {}
+pub trait AlgebraField: Addition + Subtraction + Multiplication + Division + Zero + Clone + Copy + Conjugate {}
 /// [Alias] The Base field type
 pub trait AlgebraRing: Addition + Subtraction + Multiplication {}
 
@@ -39,10 +48,44 @@ pub trait FiniteVectorSpace<T: AlgebraField>:
 {
 }
 
+/// Inner product space
+pub trait InnerProductSpace<T: AlgebraField>: FiniteVectorSpace<T> {
+
+    /// Dot product 
+    fn dot(self, rhs: Self) -> T;
+
+}
+
+/// Inner product space
+pub trait CrossProductSpace<T: AlgebraField>: FiniteVectorSpace<T> {
+
+    /// Dot product 
+    fn cross(self, rhs: Self) -> Self;
+}
+
+pub trait ThreeDVectorSpace<T: AlgebraField>: FiniteVectorSpace<T> + InnerProductSpace<T> + CrossProductSpace<T> {
+
+}
+
 impl<U, T: Add<U, Output = Self> + AddAssign<U>> Addition<U> for T {}
 impl<U, T: Sub<U, Output = Self> + SubAssign<U>> Subtraction<U> for T {}
 impl<U, T: Mul<U, Output = Self> + MulAssign<U>> Multiplication<U> for T {}
 impl<U, T: Div<U, Output = Self> + DivAssign<U>> Division<U> for T {}
 
-impl<T: Addition + Subtraction + Multiplication + Division + Zero + Clone + Copy> AlgebraField for T {}
+impl<T: Addition + Subtraction + Multiplication + Division + Zero + Clone + Copy + Conjugate> AlgebraField for T {}
 impl<T: Addition + Subtraction + Multiplication> AlgebraRing for T {}
+
+
+macro_rules! impl_conjugate_reals {
+    ($type:ty) => (
+    impl Conjugate for $type {
+        fn conj(self) -> Self {
+            self
+    }
+    }
+    )
+}
+
+impl_conjugate_reals!(f64);
+impl_conjugate_reals!(f32);
+
